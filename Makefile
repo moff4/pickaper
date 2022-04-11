@@ -22,7 +22,6 @@ MYPY_FLAGS=--namespace-packages \
 	--allow-redefinition \
 	--no-incremental
 
-UNITTEST_THRESHOLD=90
 
 isort:
 	isort ${SERVICE_NAME} -w 120  -m 7 -j 4
@@ -31,16 +30,16 @@ test: mypy pylint flake8 unittest
 	echo "Tests passed!"
 
 mypy: build_test
-	docker run -t ${SERVICE_NAME}:test python -m mypy ${SERVICE_NAME} ${MYPY_FLAGS}
+	docker run --env-file=cicd/test.env -t ${SERVICE_NAME}:test python -m mypy ${SERVICE_NAME} ${MYPY_FLAGS}
 
 flake8: build_test
-	docker run -t ${SERVICE_NAME}:test python -m flake8 ${SERVICE_NAME} --max-line-length 120
+	docker run --env-file=cicd/test.env -t ${SERVICE_NAME}:test python -m flake8 ${SERVICE_NAME} --max-line-length 120
 
 pylint: build_test
-	docker run -t ${SERVICE_NAME}:test python -m pylint ${SERVICE_NAME} --rcfile=cicd/.pylint.cfg
+	docker run --env-file=cicd/test.env -t ${SERVICE_NAME}:test python -m pylint ${SERVICE_NAME} --rcfile=cicd/.pylint.cfg
 
 unittest: build_test
-	docker run -e UNITTEST_THRESHOLD=${UNITTEST_THRESHOLD} -t ${SERVICE_NAME}:test cicd/run_unittests.sh
+	docker run --env-file=cicd/test.env -t ${SERVICE_NAME}:test cicd/run_unittests.sh
 
 build_test:
 	docker build -t ${SERVICE_NAME}:test -f cicd/Dockerfile --target=test .
