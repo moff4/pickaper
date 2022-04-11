@@ -26,6 +26,7 @@ ENTRYPOINT cicd/entrypoint.sh $0 $@
 
 FROM python-base as prod
 WORKDIR /app
+COPY cicd/entrypoint.sh cicd/entrypoint.sh
 COPY pickaper pickaper
 ENTRYPOINT cicd/entrypoint.sh $0 $@
 CMD ["python", "-m", "pickaper"]
