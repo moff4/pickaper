@@ -1,55 +1,48 @@
-import asyncio
-import logging
-import os
-from asyncio import Queue
-from typing import Iterable
 
-from .delivary_generator import DeliveryGenerator
-from .logist import Logist
-from .pickup_box import PickupBox
-from .pickup_box_queue import PickupBoxQueue
-from .pickup_car import PickupCar
-from .types import Package
+import logging
+import argparse
+
+from pickaper import settings
+
+from .runner import start_delivery
 
 logger = logging.getLogger(__name__)
 
 
-def set_logging() -> None:
+def set_logging(log_level: str | int = logging.INFO) -> None:
+    """
+        set basic log configuration
+        :return: None
+    """
     logging.basicConfig(
         format='%(asctime)s(%(name)s)[%(levelname)s]: %(message)s',
-        level=logging.INFO,
+        level=log_level,
     )
 
 
-async def packer(packages: Iterable[Package], pickup_box_queue: PickupBoxQueue) -> None:
-    for package in packages:
-        await pickup_box_queue.push_package(package)
-
-
-async def redeliver(to_redeliver: Queue[PickupBox], pickup_box_queue: PickupBoxQueue) -> None:
-    while True:
-        box = await to_redeliver.get()
-        await pickup_box_queue.push_box(box)
-
-
 async def main(args: list[str]) -> None:
-    set_logging()
+    """
+        command line entranse; parse cli params and start delivering
+        :param args: cli args (like sys.argv)
+        :return:
+    """
+    parser = argparse.ArgumentParser(description='Package delivery emulator')
+    parser.add_argument(
+        '--cars',
+        action='store',
+        default=settings.CARS_COUNT,
+        type=int,
+        help=f'set number of cars; default {settings.CARS_COUNT}',
+    )
+    parser.add_argument(
+        '--log-level',
+        action='store',
+        default=settings.LOG_LEVEL,
+        type=str,
+        help=f'set log level; default {settings.LOG_LEVEL}',
+    )
 
-    logger.info('setting up')
-    delivery_generator = DeliveryGenerator()
-    cars = [PickupCar() for _ in range(os.cpu_count() or 8)]
+    cli_args = parser.parse_args(args)
 
-    pickup_box_queue = PickupBoxQueue()
-    redeliver_queue = Queue()  # type: Queue[PickupBox]
-    logist = Logist(to_deliver=pickup_box_queue, to_redeliver=redeliver_queue)
-    workers = [
-        packer(packages=delivery_generator, pickup_box_queue=pickup_box_queue),
-        redeliver(to_redeliver=redeliver_queue, pickup_box_queue=pickup_box_queue),
-        logist.process_deliveries(cars)
-    ]
-    logger.info('start running')
-    try:
-        await asyncio.gather(*workers)
-    except KeyboardInterrupt:
-        logger.info('got KeyboardInterrupt; shutting down')
-        pickup_box_queue.close()
+    set_logging(log_level=cli_args.log_level)
+    await start_delivery(cars_count=cli_args.cars)

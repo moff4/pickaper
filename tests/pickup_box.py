@@ -13,16 +13,16 @@ class PickupBoxCase(TestCase):
         self.assertEqual(box.size, 0)
         self.assertEqual(len(box.packages), 0)
 
-        can_append_1 = box.can_append
+        can_append_1 = box.can_add
 
         box.add_package(package)
-        can_append_2 = box.can_append
+        can_append_2 = box.can_add
         self.assertEqual(box.size, 1)
         self.assertEqual(len(box.packages), 1)
         self.assertEqual(can_append_1 - can_append_2, 1)
 
         box.add_packages([package] * 3)
-        can_append_3 = box.can_append
+        can_append_3 = box.can_add
         self.assertEqual(can_append_1 - can_append_3, 4)
         self.assertEqual(box.size, 4)
         self.assertEqual(len(box.packages), 4)

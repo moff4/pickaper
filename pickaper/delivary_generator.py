@@ -7,13 +7,19 @@ from .types import Package, PackingType
 
 class DeliveryGenerator:
     """
-    Generates new packages for delivery
+        Generates new packages for delivery
     """
     def __iter__(self) -> Iterator[Package]:
-        return self.__generate()
+        """
+            :return: generator of new packages
+        """
+        return self._generate()
 
     @staticmethod
-    def __generate() -> Iterator[Package]:
+    def _generate() -> Iterator[Package]:
+        """
+            :return: infinity generator of packages
+        """
         idx = 0
         while True:
             package_type = random.choice(list(PackingType))

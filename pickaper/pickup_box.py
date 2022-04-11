@@ -20,30 +20,56 @@ class PickupBox:
 
     @property
     def size(self) -> int:
+        """
+            :return: current size of the box
+        """
         return len(self)
 
     @classmethod
     def max_size(cls) -> int:
+        """
+            :return: maximum possible size of the box
+        """
         return cls._max_packages
 
     @property
-    def can_append(self) -> int:
+    def can_add(self) -> int:
+        """
+            :return: number of packages that can be added to this box
+        """
         return self.max_size() - self.size
 
     @property
     def packages(self) -> list[Package]:
+        """
+            :return: list of packages stored in this box
+        """
         return list(self.__packages)
 
     def add_package(self, package: Package) -> None:
-        if self.can_append < 1:
+        """
+            add one package to this box
+            :param package:
+            :return: None
+        """
+        if self.can_add < 1:
             raise ValueError('Too many packages for pick up one more')
         self.__packages.append(package)
 
     def add_packages(self, packages: list[Package]) -> None:
-        if self.can_append < len(packages):
+        """
+            add list of packages to this box
+            :param packages:
+            :return:
+        """
+        if self.can_add < len(packages):
             raise ValueError(f'Too many packages for pick up more: {len(packages)}')
         self.__packages.extend(packages)
 
     def next_package(self) -> Package | None:
+        """
+            remove and return one package from this box
+            :return: package if has packages in this box else None
+        """
         if self.__packages:
             return self.__packages.popleft()

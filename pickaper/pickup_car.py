@@ -8,12 +8,12 @@ from .types import CarBrokenError, IncorrectAddressError, Package
 
 
 class PickupCar:
-
-    logger = logging.getLogger(__name__)
-
     """
         A car can only pickup a box of packages and the driver will deliver them one by one
     """
+
+    logger = logging.getLogger(__name__)
+
     async def deliver_box(self, pickup_box: PickupBox) -> PickupBox | None:
         """
             Deliver box of packages
