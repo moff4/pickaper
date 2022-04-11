@@ -2,7 +2,7 @@
 from unittest import TestCase
 import asyncio
 
-from pickaper.pickup_car import PickupCar
+from pickaper.pickup_car import PickupCar, DeliveryStatus
 from pickaper.pickup_box import PickupBox
 from pickaper.types import Package, PackingType, CarBrokenError, IncorrectAddressError
 
@@ -26,9 +26,12 @@ class PickupCarCase(TestCase):
                     ]
                 )
             )
-            result = loop.run_until_complete(coro)
+            result = loop.run_until_complete(coro)  # type: DeliveryStatus
 
-        self.assertIsNone(result)
+        self.assertFalse(result.car_was_broken)
+        self.assertEqual(len(result.delivered), 5)
+        self.assertEqual(len(result.incorrect_address), 0)
+        self.assertIsNone(result.to_be_redelivered)
 
     def test_car_broken(self) -> None:
         counter = 0
@@ -50,10 +53,13 @@ class PickupCarCase(TestCase):
                     ]
                 )
             )
-            result = loop.run_until_complete(coro)
+            result = loop.run_until_complete(coro)  # type: DeliveryStatus
 
-        self.assertIsNotNone(result)
-        self.assertEqual(len(result), 3)
+        self.assertTrue(result.car_was_broken)
+        self.assertEqual(len(result.delivered), 2)
+        self.assertEqual(len(result.incorrect_address), 0)
+        self.assertIsNotNone(result.to_be_redelivered)
+        self.assertEqual(len(result.to_be_redelivered.packages), 3)
 
     def test_invalid_address(self) -> None:
         counter = 0
@@ -75,9 +81,11 @@ class PickupCarCase(TestCase):
                     ]
                 )
             )
-            result = loop.run_until_complete(coro)
+            result = loop.run_until_complete(coro)  # type: DeliveryStatus
 
-        self.assertIsNotNone(result)
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result.packages[0].idx, 1)  # id of 2nd package is 1
+        self.assertFalse(result.car_was_broken)
+        self.assertEqual(len(result.delivered), 4)
+        self.assertEqual(len(result.incorrect_address), 1)
+        self.assertEqual(result.incorrect_address[0].idx, 1)  # id of 2nd package is 1
+        self.assertIsNone(result.to_be_redelivered)
 

@@ -2,9 +2,21 @@
 import asyncio
 import logging
 import random
+from dataclasses import dataclass
 
 from .pickup_box import PickupBox
 from .types import CarBrokenError, IncorrectAddressError, Package
+
+
+@dataclass
+class DeliveryStatus:
+    """
+        status of delivery one PickupBox
+    """
+    car_was_broken: bool
+    delivered: list[Package]
+    incorrect_address: list[Package]
+    to_be_redelivered: PickupBox | None
 
 
 class PickupCar:
@@ -14,28 +26,33 @@ class PickupCar:
 
     logger = logging.getLogger(__name__)
 
-    async def deliver_box(self, pickup_box: PickupBox) -> PickupBox | None:
+    async def deliver_box(self, pickup_box: PickupBox) -> DeliveryStatus:
         """
             Deliver box of packages
             :param pickup_box: box of packages to deliver
             :return: PickupBox with packages to be redelivered or None if all packages were delivered
         """
-        to_be_redelivered = []
+        car_was_broken = False
+        delivered = []
+        incorrect_address = []
 
         while package := pickup_box.next_package():
             try:
                 await self.__deliver_package(package)
-                self.logger.info('package delivered! :)')
+                delivered.append(package)
             except CarBrokenError:
+                car_was_broken = True
                 pickup_box.add_package(package)
-                self.logger.error('car was broken :(')
                 break
             except IncorrectAddressError:
-                self.logger.error('incorrect address :(')
-                to_be_redelivered.append(package)
+                incorrect_address.append(package)
 
-        pickup_box.add_packages(to_be_redelivered)
-        return pickup_box if pickup_box.size else None
+        return DeliveryStatus(
+            car_was_broken=car_was_broken,
+            delivered=delivered,
+            incorrect_address=incorrect_address,
+            to_be_redelivered=pickup_box if pickup_box.size else None,
+        )
 
     async def __deliver_package(self, package: Package) -> Package:
         """

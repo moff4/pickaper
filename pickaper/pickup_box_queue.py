@@ -37,7 +37,7 @@ class PickupBoxQueue:
             :param package:
             :return:
         """
-        self.logger.info('push package: queue=%d', self._queue.qsize())
+        self.logger.debug('push package: queue=%d', self._queue.qsize())
         if len(self._package_buffer) >= PickupBox.max_size():
             box = self._buffer_to_box()
             await self._queue.put(box)
@@ -49,7 +49,7 @@ class PickupBoxQueue:
         :param box:
         :return:
         """
-        self.logger.info('push box: queue=%d', self._queue.qsize())
+        self.logger.debug('push box: queue=%d', self._queue.qsize())
         if box.size < box.max_size() and self._package_buffer:
             box.add_packages(
                 [
@@ -65,7 +65,7 @@ class PickupBoxQueue:
             if queue is empty, waits for next package
             :return:
         """
-        self.logger.info('pop box: queue=%d', self._queue.qsize())
+        self.logger.debug('pop box: queue=%d', self._queue.qsize())
         if self._queue.qsize():
             return await self._queue.get()
 
